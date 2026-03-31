@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光與夜之戀 - 專屬圖鑑</title>
+    <style>
+        /* 基礎樣式：深色質感背景 */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #f0f0f0; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #d4af37; margin-bottom: 40px; letter-spacing: 2px; }
+        
+        /* 時間軸與活動區塊 */
+        .timeline-event { max-width: 1200px; margin: 0 auto 60px auto; border-left: 3px solid #d4af37; padding-left: 20px; position: relative; }
+        .timeline-event::before { content: ''; position: absolute; left: -9px; top: 0; width: 15px; height: 15px; background-color: #d4af37; border-radius: 50%; }
+        .event-title { font-size: 1.6em; color: #d4af37; margin-bottom: 5px; font-weight: bold; }
+        .event-date { font-size: 0.9em; color: #888; margin-bottom: 20px; }
+        
+        /* 子標題 (分層標籤) */
+        .sub-title { font-size: 1.1em; color: #aaa; margin: 25px 0 15px 0; border-bottom: 1px dashed #444; padding-bottom: 8px; letter-spacing: 1px; }
+
+        /* 圖片畫廊 */
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; align-items: start; }
+        .card { background: #1e1e1e; border-radius: 8px; padding: 10px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 12px rgba(0,0,0,0.5); border: 1px solid #333; }
+        .card img { width: 100%; height: auto; border-radius: 4px; display: block; }
+        .card-info { margin-top: 12px; text-align: center; font-size: 0.9em; line-height: 1.4; }
+        .card-tag { display: inline-block; background: #333; color: #d4af37; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-top: 5px; }
+        
+        /* 燈箱樣式 (Modal) */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); }
+        .modal-content { margin: 40px auto; display: block; width: 90%; max-width: 800px; animation: zoom 0.3s; }
+        @keyframes zoom { from {transform:scale(0.9)} to {transform:scale(1)} }
+        .close { position: fixed; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; z-index: 1001; }
+    </style>
+</head>
+<body>
+
+    <h1>光與夜之戀 - 典藏圖鑑</h1>
+    
+    <div id="timeline-container"></div>
+
+    <div id="imageModal" class="modal" onclick="closeModal(event)">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="fullImage">
+    </div>
+
+    <script>
+        // ==========================================
+        // 🌟 把你的 Excel 資料貼在下面的反引號之間 🌟
+        // ==========================================
+        const rawData = `
+角色	圖片1(一段光影)	圖片2(二段光影)	日期	活動名稱	稀有度
+蕭逸	2025CVD_11_1.jpg	2025CVD_11_2.jpg	2025年8月9日	202508_七夕活動	六星
+陸沉	2025CVD_66_1.jpg	2025CVD_66_2.jpg	2025年8月9日	202508_七夕活動	六星
+齊司禮	2025CVD_77_1.jpg	2025CVD_77_2.jpg	2025年8月9日	202508_七夕活動	六星
+查理蘇	2025CVD_55_1.jpg	2025CVD_55_2.jpg	2025年8月9日	202508_七夕活動	六星
+夏鳴星	2025CVD_00_1.jpg	2025CVD_00_2.jpg	2025年8月9日	202508_七夕活動	六星
+全部	2025CVD_ALL_1.jpg	2025CVD_ALL_2.jpg	2025年8月9日	202508_七夕活動	一～三星
+蕭逸	2025DE_11_1.jpg	2025DE_11_2.jpg	2025年11月8日	202511_雙十一活動	六星
+陸沉	2025DE_66_1.jpg	2025DE_66_2.jpg	2025年11月8日	202511_雙十一活動	六星
+齊司禮	2025DE_77_1.jpg	2025DE_77_2.jpg	2025年11月8日	202511_雙十一活動	六星
+查理蘇	2025DE_55_1.jpg	2025DE_55_2.jpg	2025年11月8日	202511_雙十一活動	六星
+夏鳴星	2025DE_00_1.jpg	2025DE_00_2.jpg	2025年11月8日	202511_雙十一活動	六星
+全部	2025DE_ALL_1.jpg	2025DE_ALL_2.jpg	2025年11月8日	202511_雙十一活動	一～三星
+蕭逸	2026CNY_11_1.jpg	2026CNY_11_2.jpg	2026年2月16日	202602_春節情人節活動	六星
+陸沉	2026CNY_66_1.jpg	2026CNY_66_2.jpg	2026年2月16日	202602_春節情人節活動	六星
+齊司禮	2026CNY_77_1.jpg	2026CNY_77_2.jpg	2026年2月16日	202602_春節情人節活動	六星
+查理蘇	2026CNY_55_1.jpg	2026CNY_55_2.jpg	2026年2月16日	202602_春節情人節活動	六星
+夏鳴星	2026CNY_00_1.jpg	2026CNY_00_2.jpg	2026年2月16日	202602_春節情人節活動	六星
+全部	2026CNY_ALL_1.jpg	NONE.jpg	2026年2月16日	202602_春節情人節活動	一～三星
+
+        `;
+
+        // ==========================================
+        // 自動解析與分層渲染邏輯
+        // ==========================================
+        const rows = rawData.trim().split('\n');
+        const groupedData = {};
+
+        rows.forEach(row => {
+            if (!row.trim()) return; 
+            const separator = row.includes('\t') ? '\t' : ',';
+            const cols = row.split(separator);
+            if (cols[0].trim() === "角色") return;
+
+            const character = cols[0] ? cols[0].trim() : "";
+            let img1 = cols[1] ? cols[1].trim() : "";
+            let img2 = cols[2] ? cols[2].trim() : "";
+            const date = cols[3] ? cols[3].trim() : "未知時間";
+            const eventName = cols[4] ? cols[4].trim() : "未知活動";
+            const rarity = cols[5] ? cols[5].trim() : "";
+
+            try { if (img1) img1 = decodeURIComponent(img1); } catch(e) {}
+            try { if (img2) img2 = decodeURIComponent(img2); } catch(e) {}
+
+            if (!groupedData[eventName]) {
+                groupedData[eventName] = { date: date, preCards: [], postCards: [], otherCards: [] };
+            }
+
+            // 處理圖片 1
+            if (img1) {
+                if (character === "全部") {
+                    groupedData[eventName].otherCards.push({ character, rarity, type: "全體總覽 1", image: img1 });
+                } else if (rarity === "三星") {
+                    groupedData[eventName].otherCards.push({ character, rarity, type: "活動小卡", image: img1 });
+                } else {
+                    groupedData[eventName].preCards.push({ character, rarity, type: "一段光影", image: img1 });
+                }
+            }
+
+            // 處理圖片 2
+            if (img2) {
+                if (character === "全部") {
+                    groupedData[eventName].otherCards.push({ character, rarity, type: "全體總覽 2", image: img2 });
+                } else {
+                    groupedData[eventName].postCards.push({ character, rarity, type: "二段光影", image: img2 });
+                }
+            }
+        });
+
+        function renderGalleryRow(cards, title) {
+            if (cards.length === 0) return '';
+            let html = `<div class="sub-title">✦ ${title} ✦</div><div class="gallery">`;
+            cards.forEach(card => {
+                html += `
+                    <div class="card" onclick="openModal('${card.image}')">
+                        <img src="${card.image}" alt="${card.character}" onerror="this.src='https://via.placeholder.com/200x300/333333/d4af37?text=找不到圖片'">
+                        <div class="card-info">
+                            <strong>${card.character}</strong><br>
+                            <span class="card-tag">${card.rarity} · ${card.type}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            return html;
+        }
+
+        const container = document.getElementById('timeline-container');
+        for (const [eventName, data] of Object.entries(groupedData)) {
+            let eventHtml = `
+                <div class="timeline-event">
+                    <div class="event-title">${eventName}</div>
+                    <div class="event-date">時間線：${data.date}</div>
+            `;
+            
+            eventHtml += renderGalleryRow(data.preCards, "一段光影");
+            eventHtml += renderGalleryRow(data.postCards, "二段光影");
+            eventHtml += renderGalleryRow(data.otherCards, "活動小卡 / 全體總覽");
+
+            eventHtml += `</div>`;
+            container.innerHTML += eventHtml;
+        }
+
+        function openModal(imageSrc) {
+            document.getElementById("imageModal").style.display = "block";
+            document.getElementById("fullImage").src = imageSrc;
+        }
+        function closeModal(event) {
+            if (event.target.id === 'imageModal' || event.target.className === 'close') {
+                document.getElementById("imageModal").style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
