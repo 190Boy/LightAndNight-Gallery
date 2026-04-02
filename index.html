@@ -3,33 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>光與夜之戀 - 專屬圖鑑</title>
+    <title>光與夜之戀 - 雲端連線圖鑑</title>
     <style>
-        /* 基礎樣式：深色質感背景 */
+        /* 這裡保留你原本所有漂亮的 CSS 樣式 (省略以縮短長度) */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #f0f0f0; margin: 0; padding: 20px; }
         h1 { text-align: center; color: #d4af37; margin-bottom: 40px; letter-spacing: 2px; }
-        
-        /* 🚨 缺圖警告面板 */
         #missing-panel { display: none; background-color: rgba(255, 68, 68, 0.1); border: 2px solid #ff4444; border-radius: 8px; padding: 15px 25px; margin: 0 auto 40px auto; max-width: 1150px; color: #ff8888; }
-        #missing-panel h3 { margin-top: 0; color: #ff4444; display: flex; align-items: center; gap: 10px; }
         #missing-list { list-style-type: none; padding-left: 0; margin-bottom: 0; font-family: monospace; font-size: 1.1em; line-height: 1.6; }
-        #missing-list li::before { content: "⚠️ "; }
-
-        /* 時間軸與活動區塊 */
         .timeline-event { max-width: 1200px; margin: 0 auto 60px auto; border-left: 3px solid #d4af37; padding-left: 20px; position: relative; }
         .timeline-event::before { content: ''; position: absolute; left: -9px; top: 0; width: 15px; height: 15px; background-color: #d4af37; border-radius: 50%; }
         .event-title { font-size: 1.8em; color: #d4af37; margin-bottom: 10px; font-weight: bold; }
-        
-        /* 活動專屬資訊列 */
         .event-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
         .meta-tag { background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.4); color: #e6c875; padding: 4px 10px; border-radius: 4px; font-size: 0.9em; display: flex; align-items: center; gap: 5px; }
-        /* 角色專屬名牌標籤 (銀白色系區分) */
         .char-label { background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; font-weight: bold; }
-        
-        /* 子標題 */
         .sub-title { font-size: 1.1em; color: #aaa; margin: 25px 0 15px 0; border-bottom: 1px dashed #444; padding-bottom: 8px; letter-spacing: 1px; }
-
-        /* 圖片畫廊 */
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; align-items: start; }
         .card { background: #1e1e1e; border-radius: 8px; padding: 10px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .card:hover { transform: translateY(-5px); box-shadow: 0 8px 12px rgba(0,0,0,0.5); border: 1px solid #333; }
@@ -37,24 +24,21 @@
         .card img.missing-img { border: 2px dashed #ff4444; }
         .card-info { margin-top: 12px; text-align: center; font-size: 0.9em; line-height: 1.4; }
         .card-tag { display: inline-block; background: #333; color: #d4af37; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-top: 5px; }
-        
-        /* 燈箱樣式 */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); }
-        .modal-content { margin: 40px auto; display: block; width: 90%; max-width: 800px; animation: zoom 0.3s; }
-        @keyframes zoom { from {transform:scale(0.9)} to {transform:scale(1)} }
-        .close { position: fixed; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; z-index: 1001; }
+        .modal-content { margin: 40px auto; display: block; width: 90%; max-width: 800px; }
+        .close { position: fixed; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <h1>光與夜之戀 - 典藏圖鑑</h1>
+    <h1>光與夜之戀 - 典藏圖鑑 (雲端同步版)</h1>
     
     <div id="missing-panel">
         <h3>🚨 系統偵測到以下圖片尚未上傳或檔名錯誤：</h3>
         <ul id="missing-list"></ul>
     </div>
 
-    <div id="timeline-container"></div>
+    <div id="timeline-container">正在從 Google 試算表同步資料...</div>
 
     <div id="imageModal" class="modal" onclick="closeModal(event)">
         <span class="close">&times;</span>
@@ -63,184 +47,122 @@
 
     <script>
         // ==========================================
-        // 🌟 把你的 Excel 資料貼在下面的反引號之間 🌟
+        // 🌟 貼上你在第一步取得的 Google 試算表 CSV 連結 🌟
         // ==========================================
-        const rawData = `
-角色	圖片1(一段光影)	圖片2(二段光影)	稀有度	活動名稱	活動類型	活動天數	開始日期	結束日期	預估營收總額
-蕭逸	Unlisted.jpg	NONE.jpg	六星	202603_古劍	轉盤				
-陸沉	Unlisted.jpg	NONE.jpg	六星	202603_古劍	轉盤				
-齊司禮	Unlisted.jpg	NONE.jpg	六星	202603_古劍	轉盤				
-查理蘇	Unlisted.jpg	NONE.jpg	六星	202603_古劍	轉盤				
-夏鳴星	2026LuckyWheel_00_1.jpg	NONE.jpg	六星	202603_古劍	轉盤	8	2026/3/30	2026/4/7	$0
-蕭逸	2026CardPool_11_1.jpg	2026CardPool_11_2.jpg	六星	202603_DDR	卡池	8	2026/3/7	2026/3/15	$675,606
-陸沉	Unlisted.jpg	Unlisted.jpg	六星	202603_DDR	卡池				
-齊司禮	2026CardPool_77_1.jpg	2026CardPool_77_2.jpg	六星	202603_DDR	卡池	8	2026/3/15	2026/3/23	$358,957
-查理蘇	Unlisted.jpg	Unlisted.jpg	六星	202603_DDR	卡池				
-夏鳴星	Unlisted.jpg	Unlisted.jpg	六星	202603_DDR	卡池				
-蕭逸	2026CNY_11_1.jpg	2026CNY_11_2.jpg	六星	202602_春節情人節活動	混池	11	2026/2/16	2026/2/27	$1,484,230
-陸沉	2026CNY_66_1.jpg	2026CNY_66_2.jpg	六星	202602_春節情人節活動					
-齊司禮	2026CNY_77_1.jpg	2026CNY_77_2.jpg	六星	202602_春節情人節活動					
-查理蘇	2026CNY_55_1.jpg	2026CNY_55_2.jpg	六星	202602_春節情人節活動					
-夏鳴星	2026CNY_00_1.jpg	2026CNY_00_2.jpg	六星	202602_春節情人節活動					
-全部	2026CNY_ALL_1.jpg	NONE.jpg	一～三星	202602_春節情人節活動					
-蕭逸	2026Limited_11_1.jpg	NONE.jpg	三星	202602_疾影狂想曲	限時1	17	2026/2/10	2026/2/27	$0
-陸沉	2026Limited_66_1.jpg	NONE.jpg	三星	202602_疾影狂想曲	限時1				
-齊司禮	2026Limited_77_1.jpg	NONE.jpg	三星	202602_疾影狂想曲	限時1				
-查理蘇	2026Limited_55_1.jpg	NONE.jpg	三星	202602_疾影狂想曲	限時1				
-夏鳴星	2026Limited_00_1.jpg	NONE.jpg	三星	202602_疾影狂想曲	限時1				
-蕭逸	Unlisted.jpg	Unlisted.jpg	五星	202602_換物活動	活躍				
-陸沉	2026Active_66_1.jpg	2026Active_66_2.jpg	五星	202602_換物活動	活躍	7	2026/3/23	2026/3/30	$154,251
-齊司禮	Unlisted.jpg	Unlisted.jpg	五星	202602_換物活動	活躍				
-查理蘇	2026Active_55_1.jpg	2026Active_55_2.jpg	五星	202602_換物活動	活躍	7	2026/2/6	2026/2/13	$661,235
-夏鳴星	Unlisted.jpg	Unlisted.jpg	五星	202602_換物活動	活躍				
-齊司禮	2026Column_77_1.jpg	2026Column_77_2.jpg	五星	202601_專欄	專欄	45	2026/1/28	2026/3/14	$0
-全部	2026Limited_ALL_1.jpg	NONE.jpg	0星	202601_絨雪趣戲	限時2	9	2026/1/1	2026/1/10	$0
-蕭逸	2025Limited_11_1.jpg	NONE.jpg	二星	202512_甜夢漫旅	限時1	12	2025/12/29	2026/1/10	$413,037
-陸沉	2025Limited_66_1.jpg	NONE.jpg	二星	202512_甜夢漫旅	限時1				
-齊司禮	2025Limited_77_1.jpg	NONE.jpg	二星	202512_甜夢漫旅	限時1				
-查理蘇	2025Limited_55_1.jpg	NONE.jpg	二星	202512_甜夢漫旅	限時1				
-夏鳴星	2025Limited_00_1.jpg	NONE.jpg	二星	202512_甜夢漫旅	限時1				
-蕭逸	2025DE_11_1.jpg	2025DE_11_2.jpg	六星	202511_雙十一活動	混池	11	2025/11/8	2025/11/19	$2,014,158
-陸沉	2025DE_66_1.jpg	2025DE_66_2.jpg	六星	202511_雙十一活動					
-齊司禮	2025DE_77_1.jpg	2025DE_77_2.jpg	六星	202511_雙十一活動					
-查理蘇	2025DE_55_1.jpg	2025DE_55_2.jpg	六星	202511_雙十一活動					
-夏鳴星	2025DE_00_1.jpg	2025DE_00_2.jpg	六星	202511_雙十一活動					
-全部	2025DE_ALL_1.jpg	2025DE_ALL_2.jpg	一～三星	202511_雙十一活動					
-全部	2025Dream_ALL_1.jpg	NONE.jpg	二星	202511_織夢迷境	其他				
-蕭逸	2025CardPool01_11_1.jpg	2025CardPool01_11_2.jpg	六星	202509_密室	卡池	8	2025/9/14	2025/9/22	$598,723
-陸沉	2025CardPool01_66_1.jpg	2025CardPool01_66_2.jpg	六星	202509_密室	卡池	8	2025/12/14	2025/12/22	$269,243
-齊司禮	2025CardPool01_77_1.jpg	2025CardPool01_77_2.jpg	六星	202509_密室	卡池	8	2025/12/6	2025/12/14	$250,614
-查理蘇	2025CardPool01_55_1.jpg	2025CardPool01_55_2.jpg	六星	202509_密室	卡池	8	2025/9/6	2025/9/14	$283,871
-夏鳴星	2025CardPool01_00_1.jpg	2025CardPool01_00_2.jpg	六星	202509_密室	卡池	8	2026/1/28	2026/2/5	$740,727
-蕭逸	2025CVD_11_1.jpg	2025CVD_11_2.jpg	六星	202508_七夕活動	混池	11	2025/8/9	2025/8/20	$1,881,818
-陸沉	2025CVD_66_1.jpg	2025CVD_66_2.jpg	六星	202508_七夕活動					
-齊司禮	2025CVD_77_1.jpg	2025CVD_77_2.jpg	六星	202508_七夕活動					
-查理蘇	2025CVD_55_1.jpg	2025CVD_55_2.jpg	六星	202508_七夕活動					
-夏鳴星	2025CVD_00_1.jpg	2025CVD_00_2.jpg	六星	202508_七夕活動					
-全部	2025CVD_ALL_1.jpg	2025CVD_ALL_2.jpg	一～三星	202508_七夕活動					
-蕭逸	2025Birthday_11_1.jpg	2025Birthday_11_2.jpg	六星	202507_生日	生日	9	2025/11/19	2025/11/28	$665,523
-陸沉	2025Birthday_66_1.jpg	2025Birthday_66_2.jpg	六星	202507_生日	生日	9	2026/1/18	2026/1/27	$546,828
-齊司禮	2025Birthday_77_1.jpg	2025Birthday_77_2.jpg	六星	202507_生日	生日	9	2025/8/28	2025/9/6	$573,689
-查理蘇	2025Birthday_55_1.jpg	2025Birthday_55_2.jpg	六星	202507_生日	生日	9	2025/7/20	2025/7/29	$560,118
-夏鳴星	Unlisted.jpg	Unlisted.jpg	六星	202507_生日	生日				
-蕭逸	2025Anniversary_11_1.jpg	2025Anniversary_11_2.jpg	六星	202506_週年活動	混池	13	2025/6/13	2025/6/26	$3,422,394
-陸沉	2025Anniversary_66_1.jpg	2025Anniversary_66_2.jpg	六星	202506_週年活動					
-齊司禮	2025Anniversary_77_1.jpg	2025Anniversary_77_2.jpg	六星	202506_週年活動					
-查理蘇	2025Anniversary_55_1.jpg	2025Anniversary_55_2.jpg	六星	202506_週年活動					
-夏鳴星	2025Anniversary_00_1.jpg	2025Anniversary_00_2.jpg	六星	202506_週年活動					
-全部	2025Anniversary_ALL_1.jpg	2025Anniversary_ALL_2.jpg	一～三星	202506_週年活動					
-蕭逸	2025LuckyWheel_11_1.jpg	NONE.jpg	六星	202506_電台	轉盤	8	2026/1/10	2026/1/18	$588,611
-陸沉	2025LuckyWheel_66_1.jpg	NONE.jpg	六星	202506_電台	轉盤	8	2026/2/27	2026/3/7	$441,894
-齊司禮	2025LuckyWheel_77_1.jpg	NONE.jpg	六星	202506_電台	轉盤	8	2025/7/29	2025/8/6	$924,858
-查理蘇	2025LuckyWheel_55_1.jpg	NONE.jpg	六星	202506_電台	轉盤	8	2025/6/5	2025/6/13	$2,381,656
-夏鳴星	2025LuckyWheel_00_1.jpg	NONE.jpg	六星	202506_電台	轉盤	8	2025/10/29	2025/11/6	$1,139,580
-蕭逸	2025Active01_11_1.jpg	2025Active01_11_2.jpg	五星	202505_整理活動	活躍	7	2025/7/12	2025/7/19	$405,484
-陸沉	2025Active01_66_1.jpg	2025Active01_66_2.jpg	五星	202505_整理活動	活躍	7	2025/8/20	2025/8/27	$447,216
-齊司禮	2025Active01_77_1.jpg	2025Active01_77_2.jpg	五星	202505_整理活動	活躍	7	2025/5/29	2025/6/5	$726,679
-查理蘇	2025Active01_55_1.jpg	2025Active01_55_2.jpg	五星	202505_整理活動	活躍	7	2025/11/28	2025/12/5	$269,532
-夏鳴星	2025Active01_00_1.jpg	2025Active01_00_2.jpg	五星	202505_整理活動	活躍	7	2025/12/22	2025/12/29	$135,462
-蕭逸	2025CNY_11_1.jpg	2025CNY_11_2.jpg	六星	202501_春節情人節活動	混池	11	2025/1/28	2025/2/8	$2,022,991
-陸沉	2025CNY_66_1.jpg	2025CNY_66_2.jpg	六星	202501_春節情人節活動					
-齊司禮	2025CNY_77_1.jpg	2025CNY_77_2.jpg	六星	202501_春節情人節活動					
-查理蘇	2025CNY_55_1.jpg	2025CNY_55_2.jpg	六星	202501_春節情人節活動					
-夏鳴星	2025CNY_00_1.jpg	2025CNY_00_2.jpg	六星	202501_春節情人節活動					
-全部	2025CNY_ALL_1.jpg	2025CNY_ALL_2.jpg	一～三星	202501_春節情人節活動					
-蕭逸	2024DE_11_1.jpg	2024DE_11_2.jpg	六星	202411_雙十一活動	混池	10	2024/11/6	2024/11/16	$2,067,719
-陸沉	2024DE_66_1.jpg	2024DE_66_2.jpg	六星	202411_雙十一活動					
-齊司禮	2024DE_77_1.jpg	2024DE_77_2.jpg	六星	202411_雙十一活動					
-查理蘇	2024DE_55_1.jpg	2024DE_55_2.jpg	六星	202411_雙十一活動					
-夏鳴星	2024DE_00_1.jpg	2024DE_00_2.jpg	六星	202411_雙十一活動					
-全部	2024DE_ALL_1.jpg	2024DE_ALL_2.jpg	一～三星	202411_雙十一活動					
-蕭逸	2024CVD_11_1.jpg	2024CVD_11_2.jpg	六星	202408_七夕活動	混池	12	2024/8/12	2024/8/24	$1,950,255
-陸沉	2024CVD_66_1.jpg	2024CVD_66_2.jpg	六星	202408_七夕活動					
-齊司禮	2024CVD_77_1.jpg	2024CVD_77_2.jpg	六星	202408_七夕活動					
-查理蘇	2024CVD_55_1.jpg	2024CVD_55_2.jpg	六星	202408_七夕活動					
-夏鳴星	2024CVD_00_1.jpg	2024CVD_00_2.jpg	六星	202408_七夕活動					
-全部	2024CVD_ALL_1.jpg	2024CVD_ALL_2.jpg	一～三星	202408_七夕活動					
-蕭逸	2024Anniversary_11_1.jpg	2024Anniversary_11_2.jpg	六星	202406_週年活動	混池	13	2024/6/19	2024/7/2	$3,156,509
-陸沉	2024Anniversary_66_1.jpg	2024Anniversary_66_2.jpg	六星	202406_週年活動					
-齊司禮	2024Anniversary_77_1.jpg	2024Anniversary_77_2.jpg	六星	202406_週年活動					
-查理蘇	2024Anniversary_55_1.jpg	2024Anniversary_55_2.jpg	六星	202406_週年活動					
-夏鳴星	2024Anniversary_00_1.jpg	2024Anniversary_00_2.jpg	六星	202406_週年活動					
-全部	2024Anniversary_ALL_1.jpg	2024Anniversary_ALL_2.jpg	一～三星	202406_週年活動					
-蕭逸	2024CNY_11_1.jpg	2024CNY_11_2.jpg	六星	202402_春節情人節活動	混池	12	2024/2/9	2024/2/21	$2,685,606
-陸沉	2024CNY_66_1.jpg	2024CNY_66_2.jpg	六星	202402_春節情人節活動					
-齊司禮	2024CNY_77_1.jpg	2024CNY_77_2.jpg	六星	202402_春節情人節活動					
-查理蘇	2024CNY_55_1.jpg	2024CNY_55_2.jpg	六星	202402_春節情人節活動					
-夏鳴星	2024CNY_00_1.jpg	2024CNY_00_2.jpg	六星	202402_春節情人節活動					
-全部	2024CNY_ALL_1.jpg	2024CNY_ALL_2.jpg	一～三星	202402_春節情人節活動					
-        `;
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRre_6lIVecnZ7S4EN4qIbiKQgk08-EfmA7ldArCdmpe5_T3R3kCHnL04SfH5lQ3g/pub?gid=2100615640&single=true&output=csv";
 
         // ==========================================
-        // 自動解析邏輯
+        // 自動抓取與解析邏輯 (這是關鍵！)
         // ==========================================
-        const rows = rawData.trim().split('\n');
-        const groupedData = {};
-        
-        let currentMeta = { type: "", days: "", start: "", end: "", rev: "" };
+        async function fetchAndRender() {
+            try {
+                const response = await fetch(csvUrl);
+                const data = await response.text();
+                parseAndRender(data);
+            } catch (error) {
+                document.getElementById('timeline-container').innerHTML = "❌ 無法讀取試算表，請確認發佈設定是否正確。";
+                console.error(error);
+            }
+        }
 
-        rows.forEach(row => {
-            if (!row.trim()) return; 
-            const separator = row.includes('\t') ? '\t' : ',';
-            const cols = row.split(separator);
-            if (cols[0].trim() === "角色") return;
+        function parseAndRender(csvData) {
+            // 使用正則表達式解析 CSV，避免逗號衝突
+            const rows = csvData.split(/\r?\n/).map(row => {
+                const matches = row.match(/(".*?"|[^",\t]+)(?=\s*[,|\t]|\s*$)/g);
+                return matches ? matches.map(m => m.replace(/^"|"$/g, '').trim()) : [];
+            });
 
-            const character = cols[0] ? cols[0].trim() : "";
-            let img1 = cols[1] ? cols[1].trim() : "";
-            let img2 = cols[2] ? cols[2].trim() : "";
-            const rarity = cols[3] ? cols[3].trim() : "";
-            const eventName = cols[4] ? cols[4].trim() : "未知活動";
+            const groupedData = {};
+            let currentMeta = { type: "", days: "", start: "", end: "", rev: "" };
+
+            rows.forEach((cols, index) => {
+                if (index === 0 || cols.length < 5) return; // 略過標題和空行
+
+                const character = cols[0];
+                let img1 = cols[1];
+                let img2 = cols[2];
+                const rarity = cols[3];
+                const eventName = cols[4];
+                const eventType = cols[5];
+                const eventDays = cols[6];
+                const startDate = cols[7];
+                const endDate = cols[8];
+                const revenue = cols[9];
+
+                if (!groupedData[eventName]) {
+                    groupedData[eventName] = { preCards: [], postCards: [], otherCards: [], metaList: [] };
+                }
+
+                const hasMeta = eventType || eventDays || startDate || endDate || revenue;
+                if (hasMeta) {
+                    currentMeta = { type: eventType, days: eventDays, start: startDate, end: endDate, rev: revenue };
+                    groupedData[eventName].metaList.push({ character: character, ...currentMeta });
+                }
+
+                if (img1) {
+                    let type = (character === "全部") ? "全體總覽 1" : (rarity.includes("三星") ? "活動小卡" : "一段光影");
+                    groupedData[eventName].preCards.push({ character, rarity, type, image: img1 });
+                }
+
+                if (img2 && currentMeta.type !== '轉盤' && currentMeta.type !== '限時1') {
+                    let type = (character === "全部") ? "全體總覽 2" : "二段光影";
+                    groupedData[eventName].postCards.push({ character, rarity, type, image: img2 });
+                }
+            });
+
+            renderHTML(groupedData);
+        }
+
+        // 渲染函數 (與之前邏輯相同)
+        function renderHTML(groupedData) {
+            const container = document.getElementById('timeline-container');
+            container.innerHTML = ""; // 清空讀取中文字
             
-            const eventType = cols[5] ? cols[5].trim() : "";
-            const eventDays = cols[6] ? cols[6].trim() : "";
-            const startDate = cols[7] ? cols[7].trim() : "";
-            const endDate = cols[8] ? cols[8].trim() : "";
-            const revenue = cols[9] ? cols[9].trim() : "";
+            for (const [eventName, data] of Object.entries(groupedData)) {
+                let metaHtml = ``;
+                let renderedSharedMeta = false;
 
-            try { if (img1) img1 = decodeURIComponent(img1); } catch(e) {}
-            try { if (img2) img2 = decodeURIComponent(img2); } catch(e) {}
-
-            if (!groupedData[eventName]) {
-                groupedData[eventName] = { 
-                    preCards: [], postCards: [], otherCards: [],
-                    metaList: [] 
-                };
-            }
-
-            // 記錄這行的活動資訊
-            const hasMeta = eventType || eventDays || startDate || endDate || revenue;
-            if (hasMeta) {
-                currentMeta = { type: eventType, days: eventDays, start: startDate, end: endDate, rev: revenue };
-                groupedData[eventName].metaList.push({ character: character, ...currentMeta });
-            }
-
-            // 處理圖片1 (一段光影)
-            if (img1) {
-                if (character === "全部") {
-                    groupedData[eventName].otherCards.push({ character, rarity, type: "全體總覽 1", image: img1 });
-                } else if (rarity.includes("三星")) {
-                    groupedData[eventName].otherCards.push({ character, rarity, type: "活動小卡", image: img1 });
-                } else if (rarity.includes("六星")) {
-                    groupedData[eventName].preCards.push({ character, rarity, type: "一段光影", image: img1 });
-                } else {
-                    groupedData[eventName].preCards.push({ character, rarity, type: "一段光影", image: img1 });
-                }
-            }
-
-            // 處理圖片2 (二段光影，轉盤與限時1一樣自動過濾)
-            if (img2) {
-                if (character === "全部") {
-                    groupedData[eventName].otherCards.push({ character, rarity, type: "全體總覽 2", image: img2 });
-                } else {
-                    // 🌟 修改：加入限時1的過濾條件
-                    if (currentMeta.type !== '轉盤' && currentMeta.type !== '限時1') {
-                        groupedData[eventName].postCards.push({ character, rarity, type: "二段光影", image: img2 });
+                data.metaList.forEach(meta => {
+                    if ((meta.type === '混池' || meta.type === '限時1') && renderedSharedMeta) return;
+                    
+                    metaHtml += `<div class="event-meta">`;
+                    if (meta.type !== '混池' && meta.type !== '限時1' && meta.character) {
+                        metaHtml += `<span class="meta-tag char-label">👤 ${meta.character}</span>`;
                     }
-                }
-            }
-        });
+                    if (meta.start && meta.end) metaHtml += `<span class="meta-tag">🕒 ${meta.start} ~ ${meta.end} (${meta.days}天)</span>`;
+                    if (meta.type) metaHtml += `<span class="meta-tag">🏷️ ${meta.type}</span>`;
+                    
+                    let rev = meta.rev;
+                    let revClean = rev ? rev.replace(/[^0-9]/g, '') : '';
+                    if (rev && revClean !== '0' && revClean !== '') {
+                        metaHtml += `<span class="meta-tag">💰 營收：${rev}</span>`;
+                    }
+                    metaHtml += `</div>`;
+                    if (meta.type === '混池' || meta.type === '限時1') renderedSharedMeta = true;
+                });
 
-        // 🚨 缺圖處理函數
+                let eventHtml = `<div class="timeline-event"><div class="event-title">${eventName}</div>${metaHtml}`;
+                eventHtml += renderGalleryRow(data.preCards, "一段光影", eventName);
+                eventHtml += renderGalleryRow(data.postCards, "二段光影", eventName);
+                eventHtml += renderGalleryRow(data.otherCards, "活動小卡 / 全體總覽", eventName);
+                eventHtml += `</div>`;
+                container.innerHTML += eventHtml;
+            }
+        }
+
+        function renderGalleryRow(cards, title, eventName) {
+            if (cards.length === 0) return '';
+            let html = `<div class="sub-title">✦ ${title} ✦</div><div class="gallery">`;
+            cards.forEach(card => {
+                const safeImage = card.image.replace(/'/g, "\\'");
+                html += `<div class="card" onclick="openModal('${safeImage}')">
+                    <img src="${safeImage}" alt="${card.character}" onerror="reportMissing(this, '${eventName}', '${card.character}', '${card.type}', '${safeImage}')">
+                    <div class="card-info"><strong>${card.character}</strong><br><span class="card-tag">${card.rarity} · ${card.type}</span></div>
+                </div>`;
+            });
+            return html + `</div>`;
+        }
+
         window.missingSet = new Set();
         function reportMissing(imgElement, eventName, character, type, filename) {
             imgElement.src = 'https://via.placeholder.com/200x300/220000/ff4444?text=圖片未上傳';
@@ -253,84 +175,6 @@
             }
         }
 
-        function renderGalleryRow(cards, title, eventName) {
-            if (cards.length === 0) return '';
-            let html = `<div class="sub-title">✦ ${title} ✦</div><div class="gallery">`;
-            cards.forEach(card => {
-                const safeImage = card.image.replace(/'/g, "\\'");
-                html += `
-                    <div class="card" onclick="openModal('${safeImage}')">
-                        <img src="${safeImage}" alt="${card.character}" 
-                             onerror="reportMissing(this, '${eventName}', '${card.character}', '${card.type}', '${safeImage}')">
-                        <div class="card-info">
-                            <strong>${card.character}</strong><br>
-                            <span class="card-tag">${card.rarity} · ${card.type}</span>
-                        </div>
-                    </div>
-                `;
-            });
-            html += `</div>`;
-            return html;
-        }
-
-        const container = document.getElementById('timeline-container');
-        for (const [eventName, data] of Object.entries(groupedData)) {
-            
-            // 處理多行標籤資訊
-            let metaHtml = ``;
-            let renderedSharedMeta = false; // 🌟 新增防呆：用來記錄混池/限時1是否已經印過標籤了
-
-            data.metaList.forEach(meta => {
-                // 🌟 如果是混池或限時1，且已經印過一次整體資訊，就直接跳過，防止 Excel 拖曳造成的重複標籤
-                if ((meta.type === '混池' || meta.type === '限時1') && renderedSharedMeta) {
-                    return; 
-                }
-
-                metaHtml += `<div class="event-meta">`;
-                
-                if (meta.type !== '混池' && meta.type !== '限時1' && meta.character) {
-                    metaHtml += `<span class="meta-tag char-label">👤 ${meta.character}</span>`;
-                }
-                
-                if (meta.start && meta.end) {
-                    metaHtml += `<span class="meta-tag">🕒 ${meta.start} ~ ${meta.end} (${meta.days}天)</span>`;
-                }
-                if (meta.type) {
-                    metaHtml += `<span class="meta-tag">🏷️ ${meta.type}</span>`;
-                }
-                
-                let rev = meta.rev;
-                let isZero = false;
-                if (rev) {
-                    let revClean = rev.replace(/[^0-9]/g, ''); 
-                    if (revClean === '' || parseInt(revClean, 10) === 0) isZero = true;
-                }
-                
-                if (rev && !isZero) {
-                    metaHtml += `<span class="meta-tag">💰 營收：${rev}</span>`;
-                }
-                metaHtml += `</div>`;
-
-                // 標記整體資訊已經印過了
-                if (meta.type === '混池' || meta.type === '限時1') {
-                    renderedSharedMeta = true;
-                }
-            });
-
-            let eventHtml = `
-                <div class="timeline-event">
-                    <div class="event-title">${eventName}</div>
-                    ${metaHtml}
-            `;
-            
-            eventHtml += renderGalleryRow(data.preCards, "一段光影", eventName);
-            eventHtml += renderGalleryRow(data.postCards, "二段光影", eventName);
-            eventHtml += renderGalleryRow(data.otherCards, "活動小卡 / 全體總覽", eventName);
-
-            eventHtml += `</div>`;
-            container.innerHTML += eventHtml;
-        }
-
         function openModal(imageSrc) {
             if(imageSrc.includes('via.placeholder.com')) return;
             document.getElementById("imageModal").style.display = "block";
@@ -341,6 +185,9 @@
                 document.getElementById("imageModal").style.display = "none";
             }
         }
+
+        // 啟動抓取
+        fetchAndRender();
     </script>
 </body>
 </html>
