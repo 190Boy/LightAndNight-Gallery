@@ -5,18 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>光與夜之戀 - 雲端連線圖鑑</title>
     <style>
-        /* 這裡保留你原本所有漂亮的 CSS 樣式 (省略以縮短長度) */
+        /* 基礎樣式：深色質感背景 */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #f0f0f0; margin: 0; padding: 20px; }
         h1 { text-align: center; color: #d4af37; margin-bottom: 40px; letter-spacing: 2px; }
+        
+        /* 🚨 缺圖警告面板 */
         #missing-panel { display: none; background-color: rgba(255, 68, 68, 0.1); border: 2px solid #ff4444; border-radius: 8px; padding: 15px 25px; margin: 0 auto 40px auto; max-width: 1150px; color: #ff8888; }
+        #missing-panel h3 { margin-top: 0; color: #ff4444; display: flex; align-items: center; gap: 10px; }
         #missing-list { list-style-type: none; padding-left: 0; margin-bottom: 0; font-family: monospace; font-size: 1.1em; line-height: 1.6; }
+        #missing-list li::before { content: "⚠️ "; }
+
+        /* 時間軸與活動區塊 */
         .timeline-event { max-width: 1200px; margin: 0 auto 60px auto; border-left: 3px solid #d4af37; padding-left: 20px; position: relative; }
         .timeline-event::before { content: ''; position: absolute; left: -9px; top: 0; width: 15px; height: 15px; background-color: #d4af37; border-radius: 50%; }
         .event-title { font-size: 1.8em; color: #d4af37; margin-bottom: 10px; font-weight: bold; }
+        
+        /* 活動專屬資訊列 */
         .event-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
         .meta-tag { background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.4); color: #e6c875; padding: 4px 10px; border-radius: 4px; font-size: 0.9em; display: flex; align-items: center; gap: 5px; }
+        /* 角色專屬名牌標籤 (銀白色系區分) */
         .char-label { background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; font-weight: bold; }
+        
+        /* 子標題 (一段/二段/總覽) */
         .sub-title { font-size: 1.1em; color: #aaa; margin: 25px 0 15px 0; border-bottom: 1px dashed #444; padding-bottom: 8px; letter-spacing: 1px; }
+
+        /* 圖片畫廊 */
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; align-items: start; }
         .card { background: #1e1e1e; border-radius: 8px; padding: 10px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .card:hover { transform: translateY(-5px); box-shadow: 0 8px 12px rgba(0,0,0,0.5); border: 1px solid #333; }
@@ -24,9 +37,12 @@
         .card img.missing-img { border: 2px dashed #ff4444; }
         .card-info { margin-top: 12px; text-align: center; font-size: 0.9em; line-height: 1.4; }
         .card-tag { display: inline-block; background: #333; color: #d4af37; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-top: 5px; }
+        
+        /* 燈箱樣式 (Modal) */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); }
-        .modal-content { margin: 40px auto; display: block; width: 90%; max-width: 800px; }
-        .close { position: fixed; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
+        .modal-content { margin: 40px auto; display: block; width: 90%; max-width: 800px; animation: zoom 0.3s; }
+        @keyframes zoom { from {transform:scale(0.9)} to {transform:scale(1)} }
+        .close { position: fixed; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; z-index: 1001; }
     </style>
 </head>
 <body>
@@ -47,12 +63,12 @@
 
     <script>
         // ==========================================
-        // 🌟 貼上你在第一步取得的 Google 試算表 CSV 連結 🌟
+        // 🌟 請記得在此貼上你在 Google 試算表取得的 CSV 發佈連結 🌟
         // ==========================================
         const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRre_6lIVecnZ7S4EN4qIbiKQgk08-EfmA7ldArCdmpe5_T3R3kCHnL04SfH5lQ3g/pub?gid=2100615640&single=true&output=csv";
 
         // ==========================================
-        // 自動抓取與解析邏輯 (這是關鍵！)
+        // 自動抓取與解析邏輯
         // ==========================================
         async function fetchAndRender() {
             try {
@@ -60,16 +76,17 @@
                 const data = await response.text();
                 parseAndRender(data);
             } catch (error) {
-                document.getElementById('timeline-container').innerHTML = "❌ 無法讀取試算表，請確認發佈設定是否正確。";
+                document.getElementById('timeline-container').innerHTML = "❌ 無法讀取試算表，請確認發佈設定與網址是否正確。本地端直接打開會被瀏覽器安全機制限制無法讀取，上傳至 GitHub 即可解決。";
                 console.error(error);
             }
         }
 
         function parseAndRender(csvData) {
-            // 使用正則表達式解析 CSV，避免逗號衝突
-            const rows = csvData.split(/\r?\n/).map(row => {
-                const matches = row.match(/(".*?"|[^",\t]+)(?=\s*[,|\t]|\s*$)/g);
-                return matches ? matches.map(m => m.replace(/^"|"$/g, '').trim()) : [];
+            // 解析 CSV 行
+            const lines = csvData.split(/\r?\n/).filter(line => line.trim() !== "");
+            const rows = lines.map(line => {
+                // 簡單解析 comma-separated, 若內容有引號需更專業的 CSV parser, 但這裏先用簡單做法
+                return line.split(',').map(cell => cell.replace(/^"|"$/g, '').trim());
             });
 
             const groupedData = {};
@@ -78,16 +95,19 @@
             rows.forEach((cols, index) => {
                 if (index === 0 || cols.length < 5) return; // 略過標題和空行
 
-                const character = cols[0];
+                const character = cols[0] || "未知角色";
                 let img1 = cols[1];
                 let img2 = cols[2];
-                const rarity = cols[3];
-                const eventName = cols[4];
+                const rarity = cols[3] || "未知";
+                const eventName = cols[4] || "未知活動";
                 const eventType = cols[5];
                 const eventDays = cols[6];
                 const startDate = cols[7];
                 const endDate = cols[8];
                 const revenue = cols[9];
+
+                try { if (img1) img1 = decodeURIComponent(img1); } catch(e) {}
+                try { if (img2) img2 = decodeURIComponent(img2); } catch(e) {}
 
                 if (!groupedData[eventName]) {
                     groupedData[eventName] = { preCards: [], postCards: [], otherCards: [], metaList: [] };
@@ -99,32 +119,62 @@
                     groupedData[eventName].metaList.push({ character: character, ...currentMeta });
                 }
 
+                // 💡 修正後的新大腦分類邏輯：
+
+                // 處理圖片 1 (一段光影 / 活動小卡 / 全體總覽1)
                 if (img1) {
-                    let type = (character === "全部") ? "全體總覽 1" : (rarity.includes("三星") ? "活動小卡" : "一段光影");
-                    groupedData[eventName].preCards.push({ character, rarity, type, image: img1 });
+                    let cardData = { character, rarity, image: img1 };
+                    
+                    if (character === "全部") {
+                        // 1. 角色只要是「全部」 ➔ 總覽1 ➔ 歸類到 otherCards (最下方)
+                        cardData.type = "全體總覽 1";
+                        groupedData[eventName].otherCards.push(cardData);
+                    } else if (rarity.includes("三星")) {
+                        // 2. 稀有度包含「三星」 ➔ 小卡 ➔ 歸類到 otherCards (最下方)
+                        cardData.type = "活動小卡";
+                        groupedData[eventName].otherCards.push(cardData);
+                    } else {
+                        // 3. 其他 (如六星、五星人個) ➔ 一段 ➔ 歸類到 preCards (第一段)
+                        cardData.type = "一段光影";
+                        groupedData[eventName].preCards.push(cardData);
+                    }
                 }
 
-                if (img2 && currentMeta.type !== '轉盤' && currentMeta.type !== '限時1') {
-                    let type = (character === "全部") ? "全體總覽 2" : "二段光影";
-                    groupedData[eventName].postCards.push({ character, rarity, type, image: img2 });
+                // 處理圖片 2 (二段光影 / 全體總覽2)
+                if (img2) {
+                    let cardData = { character, rarity, image: img2 };
+
+                    if (character === "全部") {
+                        // 1. 角色只要是「全部」 ➔ 總覽2 ➔ 歸類到 otherCards (最下方)
+                        cardData.type = "全體總覽 2";
+                        groupedData[eventName].otherCards.push(cardData);
+                    } else {
+                        // 2. 其他個人卡 (轉盤與限時1自動過濾，不顯示二段)
+                        if (currentMeta.type !== '轉盤' && currentMeta.type !== '限時1') {
+                            cardData.type = "二段光影";
+                            groupedData[eventName].postCards.push(cardData);
+                        }
+                    }
                 }
             });
 
             renderHTML(groupedData);
         }
 
-        // 渲染函數 (與之前邏輯相同)
+        // 渲染函數
         function renderHTML(groupedData) {
             const container = document.getElementById('timeline-container');
             container.innerHTML = ""; // 清空讀取中文字
             
             for (const [eventName, data] of Object.entries(groupedData)) {
+                
                 let metaHtml = ``;
-                let renderedSharedMeta = false;
+                let renderedSharedMeta = false; // 💡 防止 Excel 拖曳生成的重複標籤
 
                 data.metaList.forEach(meta => {
+                    // 如果是共用型活動且已經印過標籤，則略過
                     if ((meta.type === '混池' || meta.type === '限時1') && renderedSharedMeta) return;
-                    
+
                     metaHtml += `<div class="event-meta">`;
                     if (meta.type !== '混池' && meta.type !== '限時1' && meta.character) {
                         metaHtml += `<span class="meta-tag char-label">👤 ${meta.character}</span>`;
@@ -142,9 +192,12 @@
                 });
 
                 let eventHtml = `<div class="timeline-event"><div class="event-title">${eventName}</div>${metaHtml}`;
+                
+                // 正確分段畫出
                 eventHtml += renderGalleryRow(data.preCards, "一段光影", eventName);
                 eventHtml += renderGalleryRow(data.postCards, "二段光影", eventName);
                 eventHtml += renderGalleryRow(data.otherCards, "活動小卡 / 全體總覽", eventName);
+                
                 eventHtml += `</div>`;
                 container.innerHTML += eventHtml;
             }
@@ -163,6 +216,7 @@
             return html + `</div>`;
         }
 
+        // 🚨 缺圖處理函數
         window.missingSet = new Set();
         function reportMissing(imgElement, eventName, character, type, filename) {
             imgElement.src = 'https://via.placeholder.com/200x300/220000/ff4444?text=圖片未上傳';
@@ -175,6 +229,7 @@
             }
         }
 
+        // 燈箱功能
         function openModal(imageSrc) {
             if(imageSrc.includes('via.placeholder.com')) return;
             document.getElementById("imageModal").style.display = "block";
