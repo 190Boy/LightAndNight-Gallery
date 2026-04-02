@@ -81,13 +81,34 @@
             }
         }
 
+        // 💡 新增：專業的 CSV 欄位解析器 (能完美處理金錢裡的逗號)
+        function parseCSVRow(str) {
+            let result = [];
+            let cell = '';
+            let inQuotes = false;
+            for (let i = 0; i < str.length; i++) {
+                let char = str[i];
+                if (char === '"' && str[i+1] === '"') {
+                    cell += '"'; // 處理雙引號跳脫
+                    i++;
+                } else if (char === '"') {
+                    inQuotes = !inQuotes; // 進入或離開被雙引號包圍的區域
+                } else if (char === ',' && !inQuotes) {
+                    result.push(cell); // 遇到逗號且不在雙引號內，代表這格結束了
+                    cell = '';
+                } else {
+                    cell += char; // 正常字元
+                }
+            }
+            result.push(cell);
+            return result.map(c => c.trim()); // 整理頭尾空白
+        }
+
         function parseAndRender(csvData) {
-            // 解析 CSV 行
             const lines = csvData.split(/\r?\n/).filter(line => line.trim() !== "");
-            const rows = lines.map(line => {
-                // 簡單解析 comma-separated, 若內容有引號需更專業的 CSV parser, 但這裏先用簡單做法
-                return line.split(',').map(cell => cell.replace(/^"|"$/g, '').trim());
-            });
+            
+            // 使用新的解析器處理每一行
+            const rows = lines.map(line => parseCSVRow(line));
 
             const groupedData = {};
             let currentMeta = { type: "", days: "", start: "", end: "", rev: "" };
@@ -119,22 +140,17 @@
                     groupedData[eventName].metaList.push({ character: character, ...currentMeta });
                 }
 
-                // 💡 修正後的新大腦分類邏輯：
-
                 // 處理圖片 1 (一段光影 / 活動小卡 / 全體總覽1)
                 if (img1) {
                     let cardData = { character, rarity, image: img1 };
                     
                     if (character === "全部") {
-                        // 1. 角色只要是「全部」 ➔ 總覽1 ➔ 歸類到 otherCards (最下方)
                         cardData.type = "全體總覽 1";
                         groupedData[eventName].otherCards.push(cardData);
                     } else if (rarity.includes("三星")) {
-                        // 2. 稀有度包含「三星」 ➔ 小卡 ➔ 歸類到 otherCards (最下方)
                         cardData.type = "活動小卡";
                         groupedData[eventName].otherCards.push(cardData);
                     } else {
-                        // 3. 其他 (如六星、五星人個) ➔ 一段 ➔ 歸類到 preCards (第一段)
                         cardData.type = "一段光影";
                         groupedData[eventName].preCards.push(cardData);
                     }
@@ -145,11 +161,10 @@
                     let cardData = { character, rarity, image: img2 };
 
                     if (character === "全部") {
-                        // 1. 角色只要是「全部」 ➔ 總覽2 ➔ 歸類到 otherCards (最下方)
                         cardData.type = "全體總覽 2";
                         groupedData[eventName].otherCards.push(cardData);
                     } else {
-                        // 2. 其他個人卡 (轉盤與限時1自動過濾，不顯示二段)
+                        // 轉盤與限時1自動過濾，不顯示二段
                         if (currentMeta.type !== '轉盤' && currentMeta.type !== '限時1') {
                             cardData.type = "二段光影";
                             groupedData[eventName].postCards.push(cardData);
@@ -169,7 +184,7 @@
             for (const [eventName, data] of Object.entries(groupedData)) {
                 
                 let metaHtml = ``;
-                let renderedSharedMeta = false; // 💡 防止 Excel 拖曳生成的重複標籤
+                let renderedSharedMeta = false;
 
                 data.metaList.forEach(meta => {
                     // 如果是共用型活動且已經印過標籤，則略過
